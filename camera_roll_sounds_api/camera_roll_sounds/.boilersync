@@ -1,0 +1,11 @@
+{
+  "template": "django-app",
+  "name_snake": "camera_roll_sounds",
+  "name_pretty": "Camera Roll Sounds",
+  "variables": {
+    "apps": "\"camera_roll_sounds_api.camera_roll_sounds\"",
+    "name_snake": "camera_roll_sounds",
+    "parent_package_name": "camera_roll_sounds_api",
+    "api_prefix": "api/camera_roll_sounds"
+  }
+}

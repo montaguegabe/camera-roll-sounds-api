@@ -1,0 +1,12 @@
+{
+  "template": "app-package",
+  "name_snake": "camera_roll_sounds_api",
+  "name_pretty": "Camera Roll Sounds Api",
+  "variables": {
+    "apps": "\"camera_roll_sounds_api.camera_roll_sounds\"",
+    "name_snake": "camera_roll_sounds_api"
+  },
+  "children": [
+    "camera_roll_sounds_api/camera_roll_sounds"
+  ]
+}
