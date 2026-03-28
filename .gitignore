@@ -179,3 +179,7 @@ ENV/
 Thumbs.db
 
 staticfiles
+
+# Generated
+CLAUDE.md
+AGENTS.md
