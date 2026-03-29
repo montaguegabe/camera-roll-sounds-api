@@ -4,11 +4,12 @@ import logging
 from typing import TYPE_CHECKING
 
 from asgiref.sync import async_to_sync
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.http import FileResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 
@@ -151,18 +152,27 @@ def job_status(request: Request, job_id: str) -> Response:
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([AllowAny])
 def serve_audio(request: Request, filename: str) -> FileResponse:
     """
-    Serve a generated audio file.
+    Serve a generated audio file by its unguessable filename token.
     """
     job = GenerationJob.objects.filter(
         audio_filename=filename,
         status=GenerationJob.Status.COMPLETED,
-        camera_roll_sounds_user__user=request.user,
     ).first()
     if not job:
         return Response({"error": "Audio file not found"}, status=404)
+
+    if job.audio_storage_key:
+        if not default_storage.exists(job.audio_storage_key):
+            return Response({"error": "Audio file not found"}, status=404)
+
+        return FileResponse(
+            default_storage.open(job.audio_storage_key, "rb"),
+            content_type="audio/mpeg",
+            as_attachment=False,
+        )
 
     audio_path = AUDIO_OUTPUT_DIR / filename
     if not audio_path.exists():

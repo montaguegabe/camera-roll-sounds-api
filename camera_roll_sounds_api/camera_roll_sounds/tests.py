@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from tempfile import TemporaryDirectory
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.sites.models import Site
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.test import TestCase
+from django.test.utils import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -139,7 +143,7 @@ class CameraRollSoundsUsageTests(TestCase):
         )
         self.assertEqual(response.data["total_meditations_generated"], 5)
 
-    def test_jobs_and_audio_are_only_visible_to_their_owner(self):
+    def test_jobs_are_only_visible_to_their_owner(self):
         owner = self.create_user("owner@example.com")
         other_user = self.create_user("other@example.com")
         usage = CameraRollSoundsUser.objects.create(user=owner)
@@ -152,7 +156,39 @@ class CameraRollSoundsUsageTests(TestCase):
 
         self.authenticate(other_user)
         job_status_response = self.client.get(reverse("job-status", args=[job.public_id]))
-        audio_response = self.client.get(reverse("serve-audio", args=["private.mp3"]))
 
         self.assertEqual(job_status_response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(audio_response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_audio_is_public_when_the_unguessable_token_exists(self):
+        owner = self.create_user("owner@example.com")
+        usage = CameraRollSoundsUser.objects.create(user=owner)
+
+        with TemporaryDirectory() as media_root:
+            with override_settings(
+                MEDIA_ROOT=media_root,
+                STORAGES={
+                    "default": {
+                        "BACKEND": "django.core.files.storage.FileSystemStorage",
+                    },
+                    "staticfiles": {
+                        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+                    },
+                },
+            ):
+                storage_key = default_storage.save(
+                    "camera_roll_sounds/generated_audio/private.mp3",
+                    ContentFile(b"test audio"),
+                )
+                GenerationJob.objects.create(
+                    camera_roll_sounds_user=usage,
+                    image_base64="aGVsbG8=",
+                    status=GenerationJob.Status.COMPLETED,
+                    audio_filename="private.mp3",
+                    audio_storage_key=storage_key,
+                )
+
+                audio_response = self.client.get(
+                    reverse("serve-audio", args=["private.mp3"])
+                )
+
+        self.assertEqual(audio_response.status_code, status.HTTP_200_OK)

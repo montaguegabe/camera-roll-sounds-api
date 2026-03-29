@@ -68,6 +68,7 @@ class GenerationJob(models.Model):
     scene_description = models.TextField(blank=True)
     quality_visualization = models.CharField(max_length=100, blank=True)
     audio_filename = models.CharField(max_length=255, blank=True)
+    audio_storage_key = models.CharField(max_length=255, blank=True)
     error_message = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
