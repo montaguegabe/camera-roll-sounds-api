@@ -1,0 +1,19 @@
+[project]
+name = "its-now-api"
+version = "0.1.0"
+description = ""
+authors = []
+dependencies = [
+    
+    
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.entry-points."api_core.installed_apps"]
+its_now_api = "its_now_api.installed_apps:get_installed_apps"
+
+[project.entry-points."api_core.settings"]
+its_now_api = "its_now_api.settings"

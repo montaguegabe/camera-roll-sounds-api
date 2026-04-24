@@ -1,0 +1,24 @@
+{
+  "template": "https://github.com/openbase-community/templates.git#app-package",
+  "template_commit": "54c639473202479cfa4d1bc7a39d4ae4159e6efb",
+  "name_snake": "its_now_api",
+  "name_pretty": "It's Now API",
+  "variables": {
+    "name_snake": "its_now_api",
+    "name_pretty": "It's Now API",
+    "github_user": "montaguegabe",
+    "api_package_name": "its_now_api",
+    "django_app_name": "its_now",
+    "api_prefix": "/api/",
+    "api_client_package_name": "its-now-api-client",
+    "api_client_export_name": "itsNow",
+    "auth_client_package_name": "openbase-auth-client",
+    "ui_package_name": "openbase-ui",
+    "web_package_name": "its-now-web",
+    "cdn_base_url": "https://cdn.openbase.app/its-now/",
+    "marketing_description": "It's Now",
+    "with_frontend": true,
+    "apps": "\"its_now_api.its_now\"",
+    "name_kebab": "its-now-api"
+  }
+}
