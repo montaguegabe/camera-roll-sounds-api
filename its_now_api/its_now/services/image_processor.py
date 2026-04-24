@@ -65,10 +65,11 @@ def build_continuity_context(previous_analysis: ImageAnalysisResult) -> str:
     return dedent_strip(
         f"""\
         Previous scene: {previous_analysis.scene_description}
-        Quality in the meditation so far: {previous_analysis.quality_visualization}
-        Summary of the meditation so far: {previous_analysis.continuity_summary}
+        Quality carried forward so far: {previous_analysis.quality_visualization}
+        Summary of the emotional and sensory arc so far: {previous_analysis.continuity_summary}
         Last spoken beat from the previous segment: {last_chunk}
         Continue naturally from that emotional and sensory arc instead of restarting.
+        Let one sensory element from the previous scene transform into the next scene.
         """
     )
 
@@ -77,36 +78,43 @@ def get_segment_guidance(*, image_index: int, total_images: int) -> str:
     if total_images == 1:
         return dedent_strip(
             """\
-            Create a complete meditation in 4-6 chunks with a gentle opening,
+            Create a complete guided scene in 4-6 chunks with a gentle opening,
             sensory immersion, body-based quality visualization, and a closing.
+            Do not refer to "the meditation" or describe what you are doing structurally.
             """
         )
 
     if image_index == 0:
         return dedent_strip(
             """\
-            This is the opening segment of a stitched multi-photo meditation.
+            This is the opening segment of a stitched multi-photo sequence.
             Create 3-4 chunks that settle the listener, open the first scene,
             and leave them ready to move forward without fully closing.
+            Do not refer to "the meditation" or describe the structure out loud.
             """
         )
 
     if image_index == total_images - 1:
         return dedent_strip(
             """\
-            This is the final segment of a stitched multi-photo meditation.
+            This is the final photo-based segment of a stitched multi-photo sequence.
             Create 3-4 chunks that transition smoothly from what came before,
-            immerse the listener in this scene, and bring the entire meditation
+            immerse the listener in this scene, and bring the overall experience
             to a gentle closing.
+            The transition should feel like one place slowly becoming another,
+            not like a scene cut. Avoid phrases like "now the meditation moves."
             """
         )
 
     return dedent_strip(
         """\
-        This is a middle segment of a stitched multi-photo meditation.
+        This is a middle segment of a stitched multi-photo sequence.
         Create 3-4 chunks that transition from the prior segment, deepen the
         sensory experience of this new scene, and keep the meditation moving
         without resetting the listener.
+        Let the previous scene dissolve into this one through shared texture,
+        sound, light, weather, or body feeling. Avoid phrases like
+        "now the meditation moves" or "in this meditation."
         """
     )
 
@@ -138,10 +146,17 @@ def build_system_prompt(*, image_index: int, total_images: int) -> str:
 
         3. MEDITATION CHUNKS:
            Each chunk should be 2-4 sentences, vivid and emotionally coherent.
-           For continuation segments, acknowledge the existing state of the
-           meditation and avoid repeating the full opening breath instruction.
+           For continuation segments, carry forward the existing emotional and
+           sensory state without repeating the full opening breath instruction.
            When a photo year is provided, explicitly weave that year into the
-           meditation so the listener feels when this memory took place.
+           scene so the listener feels when this memory took place.
+           Never say phrases like "the meditation", "this meditation", or
+           "now the meditation moves". The listener should feel a continuous
+           inner experience, not hear structural commentary.
+           Transitions between scenes should feel organic:
+           - echo a sensory detail from the previous scene
+           - let that detail transform into the next one
+           - avoid abrupt reset language
            Each chunk needs:
            - text: The meditation text
            - pause_after_ms: Silence after this chunk (1000-4000ms)
@@ -174,12 +189,15 @@ def analyze_image(
     )
 
     user_text = (
-        "Analyze this image and create the next segment of a stitched meditation.\n\n"
+        "Analyze this image and write the next spoken scene in a stitched sequence.\n\n"
         f"The photo is from the year {photo_year}. Mention that year naturally in "
-        "the meditation."
+        "the spoken scene."
     )
     if previous_context:
-        user_text = f"{user_text}\n\nMeditation context so far:\n{previous_context}"
+        user_text = (
+            f"{user_text}\n\nContext carried forward from the earlier scenes:\n"
+            f"{previous_context}"
+        )
 
     response = get_openai_client().beta.chat.completions.parse(
         model="gpt-4o",
@@ -250,18 +268,19 @@ def analyze_present_moment_closing(
 ) -> list[MeditationChunk]:
     system_prompt = dedent_strip(
         """\
-        You are writing the final grounded closing of a guided meditation.
+        You are writing the final grounded closing of a guided sequence.
 
         Create exactly 2 meditation chunks totaling roughly 30 seconds of spoken
         narration. This closing must:
         - bring the listener into the present moment
         - remind them who they are, where they are, and what date and time it is
         - guide them gently through opening their eyes
-        - feel like a natural continuation of the meditation that came before
+        - feel like a natural continuation of what came before
         - end with the exact final sentence: "What do you want to do now?"
 
         Use the provided user name, location, and date/time explicitly.
         Keep the language warm, grounding, and direct.
+        Do not say "the meditation" or describe the structure out loud.
         """
     )
 
@@ -271,7 +290,7 @@ def analyze_present_moment_closing(
         f"Current date and time: {current_date_time}",
     ]
     if previous_context:
-        context_lines.append(f"Meditation context so far:\n{previous_context}")
+        context_lines.append(f"Context carried forward so far:\n{previous_context}")
 
     response = get_openai_client().beta.chat.completions.parse(
         model="gpt-4o",
